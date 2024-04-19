@@ -1,5 +1,4 @@
-import { Box, IconButton, TextField, Tooltip, Typography } from "@mui/material"
-import { Add, Search } from "@mui/icons-material";
+import { Box, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material"
 import { useEffect, useState } from "react";
 import { grey } from "@mui/material/colors";
 import { useGetChatRoomsUser } from "../../hooks/services/chat-room/useGetChatRoomsUser";
@@ -7,57 +6,64 @@ import { getMessagesByChatRoom, GetMessagesByChatRoomResponse } from "../../requ
 import { useAuthService } from "../../hooks/services/authenticate/useAuthService";
 import { UserInfo } from "../../common/UserInfo";
 import { ChatRoomList } from "./components/ChatRoomList";
-
-// const messagesMock = [
-//   {
-//     id: 1,
-//     text: 'Olá, tudo bem?',
-//     date: new Date("2021-10-10T10:00:00"),
-//     user: {
-//       id: 1,
-//       name: 'João'
-//     }
-//   },
-//   {
-//     id: 2,
-//     text: 'Tudo ótimo e você?',
-//     date: new Date("2021-10-10T10:01:00"),
-//     user: {
-//       id: 2,
-//       name: 'Maria'
-//     }
-//   },
-//   {
-//     id: 3,
-//     text: 'Tudo ótimo e você?',
-//     date: new Date("2021-10-11T19:01:00"),
-//     user: {
-//       id: 2,
-//       name: 'Maria'
-//     }
-//   }
-// ]
-
-// const userInfo?.id = 1
+import { ChatMessages } from "./components/ChatMessages";
+import { useAppSelector } from "../../redux/store";
+import { HubConnectionState } from "@microsoft/signalr";
+import { Menu, Send } from "@mui/icons-material";
 
 export const ChatPage = () => {
   const {
     data: chatRooms,
-    isLoading,
-    refetch
+    isLoading
   } = useGetChatRoomsUser();
   const [chatRoomId, setChatRoomId] = useState('');
   const [messages, setMessages] = useState([] as GetMessagesByChatRoomResponse);
+  const [groupedMessages, setGroupedMessages] = useState<Record<string, GetMessagesByChatRoomResponse>>({});
   const [newMessage, setNewMessage] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [scrollMode, setScrollMode] = useState<"smooth" | "instant">("instant");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const conn = useAppSelector((state) => state.connectionReducer.connection);
 
   const { getInfoToken } = useAuthService();
 
+  const handleSendMessage = () => {
+    const send = async () => {
+      await conn?.invoke("SendMessage", newMessage, chatRoomId);
+      setNewMessage('');
+    }
+
+    send();
+  };
+
+  const groupMessagesByDate = (messagesParam?: GetMessagesByChatRoomResponse | null) => {
+    const groupedMessages: Record<string, GetMessagesByChatRoomResponse> = {};
+    (messagesParam ?? messages).forEach((message) => {
+      const dateKey = new Date(message.createdAt).toLocaleDateString('pt-BR');
+      if (!groupedMessages[dateKey]) {
+        groupedMessages[dateKey] = [];
+      }
+      groupedMessages[dateKey].push(message);
+    });
+    setIsLoadingMessages(false);
+    return groupedMessages;
+  };
+
+  const toggleBox = () => {
+    setIsOpen(!isOpen);
+  };
+
   useEffect(() => {
+    setScrollMode("instant");
     const fetch = async () => {
       if (chatRoomId) {
+        setIsLoadingMessages(true);
         const response = await getMessagesByChatRoom(chatRoomId);
         setMessages(response);
+        setGroupedMessages(groupMessagesByDate(response));
+        setIsLoadingMessages(false);
       }
     }
 
@@ -65,13 +71,42 @@ export const ChatPage = () => {
   }, [chatRoomId]);
 
   useEffect(() => {
-    const info = getInfoToken();
-    setUserInfo(info);
+    setScrollMode("smooth");
+
+    const sendMessage = async () => {
+      const info = getInfoToken();
+      setUserInfo(info);
+      if (conn?.state == HubConnectionState.Disconnected) await conn?.start();
+      const user = getInfoToken();
+
+      await conn?.invoke("JoinChat", user?.id);
+      conn?.on("ReceiveMessage", (message: {
+        id: string;
+        userId: string;
+        username: string;
+        content: string;
+        createdAt: string;
+      }) => {
+        message.username = chatRooms?.find(chatRoom => chatRoom.id === chatRoomId)?.users.find(user => user.id === message.userId)?.name || '';
+        const newMessages = [...messages, message];
+        setMessages(newMessages);
+        setGroupedMessages(groupMessagesByDate(newMessages));
+      });
+    }
+
+    sendMessage();
   }, []);
 
   useEffect(() => {
+    if (isLoading) {
+      setChatRoomId('');
+      setMessages([]);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
+      if (e.key === 'Enter') {
         handleSendMessage();
         e.preventDefault();
       }
@@ -84,135 +119,130 @@ export const ChatPage = () => {
     };
   });
 
-  const handleSendMessage = () => {
-    setMessages([
-      ...messages,
-      {
-        id: Math.random().toString(),
-        content: newMessage,
-        userId: userInfo?.id || '',
-        username: userInfo?.name || '',
-        createdAt: new Date().toISOString()
-      }
-    ]);
-    setNewMessage('');
-  };
-
-  const groupMessagesByDate = () => {
-    const groupedMessages: Record<string, GetMessagesByChatRoomResponse> = {};
-    messages.forEach((message) => {
-      const dateKey = new Date(message.createdAt).toLocaleDateString('pt-BR');
-      if (!groupedMessages[dateKey]) {
-        groupedMessages[dateKey] = [];
-      }
-      groupedMessages[dateKey].push(message);
-    });
-    return groupedMessages;
-  };
-
   return (
-    <Box display="flex" sx={{ height: '100vh' }}>
-      <ChatRoomList
-        chatRooms={chatRooms}
-        chatRoomId={chatRoomId}
-        setChatRoomId={setChatRoomId}
-      />
-      <Box
-        sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}
-        padding={2}
-      >
+    <>
+      <Box display="flex" sx={{ height: '100vh' }}>
         <Box
-          sx={{ width: '100%', height: '100%', overflowY: 'auto' }}
+          overflow="auto"
+          sx={{
+            height: '100%',
+          }}
         >
-          {Object.entries(groupMessagesByDate()).map(([date, messagesByDate]) => (
-            <div key={date}>
-              <Box sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-              }}>
-                <Box sx={{
-                  marginBottom: 2,
-                  backgroundColor: grey[200],
-                  padding: 1,
-                  borderRadius: 4,
-                }}>
-                  <Typography variant="caption">{date}</Typography>
-                </Box>
-              </Box>
-              {
-                messagesByDate.map((message) => (
-                  <Box
-                    key={message.id}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: message.userId === userInfo?.id ? 'flex-end' : 'flex-start',
-                      marginBottom: 1,
-                      height: 'fit-content'
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        marginLeft: userInfo?.id === message.userId ? 0 : 1,
-                        marginRight: userInfo?.id === message.userId ? 1 : 0,
-                      }}
-                    >
-                      {userInfo?.id === message.userId ? 'Você' : message.username}
-                    </Typography>
-                    <Box
-                      sx={{
-                        borderRadius: 4,
-                        padding: 2,
-                        backgroundColor: message.userId === userInfo?.id ? 'primary.main' : grey[200],
-                        color: message.userId === userInfo?.id ? '#fff' : '#000',
-                        maxWidth: '70%',
-                      }}
-                    >
-                      <Typography variant="body1">{message.content}</Typography>
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        marginTop: 1,
-                        marginLeft: userInfo?.id === message.userId ? 0 : 1,
-                        marginRight: userInfo?.id === message.userId ? 1 : 0,
-                        color: grey[600]
-                      }}>
-                      {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Typography>
-                  </Box>
-                ))
-              }
-            </div>
-          ))}
-        </Box>
-        <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', position: 'sticky', bottom: 0 }}>
-          <TextField
-            placeholder="Digite sua mensagem"
-            helperText="Pressione Ctrl + Enter para enviar"
-            type="text"
-            multiline
-            maxRows={4}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            fullWidth
-            variant="outlined"
-            size="medium"
+          <ChatRoomList
+            chatRooms={chatRooms}
+            chatRoomId={chatRoomId}
+            isLoading={isLoading}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            setChatRoomId={setChatRoomId}
           />
-          {/* <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSendMessage}
-            startIcon={<Send />}
-            sx={{ marginLeft: 2, height: 0 }}
-          >
-            Enviar
-          </Button> */}
         </Box>
+        <Box
+          sx={{ width: '100%', display: { xs: isOpen ? 'none' : 'block', lg: 'block' } }}
+        >
+          {
+            isLoadingMessages || isLoading ? (
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                sx={{ width: '100%', height: '100%' }}
+              >
+                <CircularProgress />
+              </Box>
+            ) :
+              messages.length === 0 && chatRoomId == '' ? (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  sx={{ width: '100%', height: '100%' }}
+                >
+                  <Typography variant="h6" color={grey[500]}>Selecione um chat para começar</Typography>
+                </Box>
+              ) :
+                messages.length === 0 ? (
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    sx={{ width: '100%', height: '100%' }}
+                  >
+                    <Typography variant="h6" color={grey[500]}>Nenhuma mensagem encontrada</Typography>
+                  </Box>
+                ) :
+                  <ChatMessages
+                    groupMessagesByDate={groupedMessages}
+                    userInfo={userInfo}
+                    scrollMode={scrollMode}
+                  />
+          }
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            position: 'sticky',
+            bottom: 0,
+            padding: 2,
+            width: '100%',
+            backgroundColor: '#fff',
+            WebkitBoxShadow: '0px -4px 3px rgba(50, 50, 50, 0.75)',
+            MozBoxShadow: '0px -4px 3px rgba(50, 50, 50, 0.75)',
+            boxShadow: '5px 0px 15px rgba(50, 50, 50, 0.3);'
+          }}>
+            <TextField
+              placeholder="Digite sua mensagem"
+              type="text"
+              // multiline
+              // maxRows={4}
+              value={newMessage}
+              fullWidth
+              onChange={(e) => setNewMessage(e.target.value)}
+              variant="outlined"
+              size="medium"
+              disabled={!chatRoomId}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                handleSendMessage();
+              }}
+              startIcon={<Send />}
+              sx={{
+                marginLeft: 2,
+                height: 55,
+                display: { xs: 'none', lg: 'flex' }
+              }}
+              disabled={!newMessage || !chatRoomId}
+            >
+              Enviar
+            </Button>
+            <IconButton
+              color="secondary"
+              onClick={() => {
+                handleSendMessage();
+              }}
+              sx={{ display: { xs: 'block', lg: 'none' }, marginLeft: 2 }}
+              disabled={!newMessage || !chatRoomId}
+            >
+              <Send />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box >
+      <Box
+        sx={{
+          display: { xs: 'block', lg: 'none' },
+          position: 'fixed',
+          top: 17,
+          left: 10,
+        }}
+        onClick={toggleBox}
+      >
+        <IconButton color="primary">
+          <Menu />
+        </IconButton>
       </Box>
-    </Box >
+    </>
   )
 }

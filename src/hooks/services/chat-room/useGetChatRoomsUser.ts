@@ -18,7 +18,7 @@ export const useGetChatRoomsUser = () => {
 
   return {
     data: (query.data as GetChatRoomsUserResponse) || [],
-    isLoading: query.isPending,
+    isLoading: query.isFetching,
     refetch: query.refetch,
   }
 }

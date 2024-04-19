@@ -9,6 +9,8 @@ const coreApi = axios.create({
   },
 });
 
+const chatApi = coreApi.defaults.baseURL + "chat-hub";
+
 const onFulfilledRequest = (config: InternalAxiosRequestConfig) => {
   const { getAuthToken } = useLogin();
   const token = getAuthToken();
@@ -38,4 +40,4 @@ coreApi.interceptors.request.use(onFulfilledRequest, (error) =>
 
 coreApi.interceptors.response.use((response) => response, logoutInterceptor);
 
-export { coreApi };
+export { coreApi, chatApi };

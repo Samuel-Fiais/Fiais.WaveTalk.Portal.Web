@@ -14,6 +14,7 @@ const getMessagesByChatRoomResponse = z.array(
 export type GetMessagesByChatRoomResponse = z.infer<typeof getMessagesByChatRoomResponse>;
 
 export const getMessagesByChatRoom = async (chatRoomId: string) => {
-  const response = await coreApi.get(`/messages/${chatRoomId}`);
+  const url = `/messages/${chatRoomId}`;
+  const response = await coreApi.get(url);
   return getMessagesByChatRoomResponse.parse(response.data.data);
 }

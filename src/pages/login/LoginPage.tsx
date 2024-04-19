@@ -1,29 +1,10 @@
-import { Box, Button, Card, CircularProgress, Container, TextField, Typography } from "@mui/material"
-import { useForm } from "react-hook-form";
-import { useAuthService } from "../../hooks/services/authenticate/useAuthService";
-
-type FormFields = {
-  emailOrUsername: string
-  password: string
-}
+import { Box, Button, Card, Container, Typography } from "@mui/material"
+import { LoginForm } from "./components/LoginForm";
+import { useState } from "react";
+import { RegisterForm } from "./components/RegisterForm";
 
 export const LoginPage = () => {
-  const {
-    register,
-    handleSubmit
-  } = useForm<FormFields>()
-
-  const {
-    login,
-    loading
-  } = useAuthService();
-
-  const onSubmit = (data: FormFields) => {
-    login({
-      emailOrUsername: data.emailOrUsername,
-      password: data.password
-    });
-  }
+  const [isCreateAccount, setIsCreateAccount] = useState(false);
 
   return (
     <Container sx={{
@@ -33,39 +14,27 @@ export const LoginPage = () => {
       height: '100vh'
     }}>
       <Card variant="outlined" sx={{ padding: 2, width: '30vw', textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
-          Bem vindo ao Wave Chat
+        <Typography variant="h4" sx={{ marginBottom: 2 }}>
+          {isCreateAccount ? "Criar conta" : "Login"}
         </Typography>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Box sx={{ marginBottom: 2 }}>
-            <TextField
-              {...register('emailOrUsername')}
-              label="Email ou Usuário"
-              type="text"
-              fullWidth
-              margin="normal"
-              required
-            />
-            <TextField
-              {...register('password')}
-              label="Senha"
-              type="password"
-              fullWidth
-              margin="normal"
-              required
-            />
-          </Box>
+        {!isCreateAccount ? (
+          <LoginForm />
+        ) : (
+          <RegisterForm
+            redirectLogin={() => setIsCreateAccount(false)}
+          />
+        )}
+        <Box sx={{ marginTop: 2 }}>
           <Button
-            type="submit"
-            variant="contained"
-            size="large"
+            variant="text"
+            size="small"
             color="primary"
-            disabled={loading}
+            onClick={() => setIsCreateAccount(!isCreateAccount)}
             fullWidth
           >
-            {loading ? <CircularProgress size={27} sx={{ color: "white" }} /> : 'Entrar'}
+            {isCreateAccount ? "Clique aqui para fazer login" : "Não tem uma conta? Cadastre-se"}
           </Button>
-        </form>
+        </Box>
       </Card>
     </Container>
   )

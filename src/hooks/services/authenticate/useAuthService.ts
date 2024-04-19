@@ -7,9 +7,17 @@ import { useStorage } from "../../useStorage";
 import { ResponseError } from "../../../common/ResponseError";
 import { UserInfo } from "../../../common/UserInfo";
 import { enqueueSnackbar } from "notistack";
+import { HubConnectionBuilder, HubConnectionState } from "@microsoft/signalr";
+import { chatApi } from "../../../config/api";
+import { useDispatch } from "react-redux";
+import { setConnection } from "../../../redux/connection/slice";
 
 export const useAuthService = () => {
   const { getStorageItem, setStorageItem, removeStorageItem } = useStorage();
+  const dispatch = useDispatch();
+  const conn = new HubConnectionBuilder()
+    .withUrl(chatApi)
+    .build();
 
   const navigate = useNavigate();
   const authenticateMutation = useMutation({
@@ -17,17 +25,20 @@ export const useAuthService = () => {
     onError: (error: AxiosError<ResponseError>) => {
       enqueueSnackbar(error.response?.data.Message, { variant: "error" });
     },
+    onSuccess: async (data) => {
+      setStorageItem(AUTH_TOKEN, data.data);
+      const user = getInfoToken();
+      navigate("/chat");
+
+      dispatch(setConnection(conn))
+      if (conn.state == HubConnectionState.Disconnected) await conn.start();
+      await conn.invoke("JoinChat", user?.id);
+    },
   });
   const queryClient = useQueryClient();
 
   const login = (loginData: AuthenticateVariables) => {
-    authenticateMutation.mutate(loginData, {
-      onSuccess: (data) => {
-        setStorageItem(AUTH_TOKEN, data.data);
-        getInfoToken();
-        navigate("/chat");
-      },
-    });
+    authenticateMutation.mutate(loginData);
   };
 
   const logout = () => {
