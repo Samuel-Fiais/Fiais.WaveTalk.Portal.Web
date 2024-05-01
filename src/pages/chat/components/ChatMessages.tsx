@@ -40,7 +40,7 @@ export const ChatMessages = ({
   return (
     <Box
       ref={scrollRef}
-      sx={{ width: "100%", height: "100%", overflowY: "auto" }}
+      sx={{ width: "100%", height: "92%", overflowY: "auto" }}
     >
       <Box
         paddingY={2}

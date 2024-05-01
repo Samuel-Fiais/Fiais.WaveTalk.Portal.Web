@@ -6,6 +6,7 @@ const getChatRoomsUserResponse = z.array(
     id: z.string(),
     alternateId: z.string(),
     createdAt: z.string(),
+    isPrivate: z.boolean(),
     description: z.string(),
     ownerUsername: z.string(),
     ownerName: z.string(),
@@ -28,4 +29,4 @@ export const getChatRoomsUser = async () => {
   const url = "/chat-rooms/user-logged";
   const response = await coreApi.get(url);
   return getChatRoomsUserResponse.parse(response.data.data);
-}
+};

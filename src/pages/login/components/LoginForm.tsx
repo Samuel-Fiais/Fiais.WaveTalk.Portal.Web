@@ -13,10 +13,7 @@ export const LoginForm = () => {
     loading
   } = useAuthService();
   
-  const {
-    register,
-    handleSubmit
-  } = useForm<LoginFormFields>()
+  const form = useForm<LoginFormFields>()
 
   const onSubmit = (data: LoginFormFields) => {
     login({
@@ -26,23 +23,29 @@ export const LoginForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <Box sx={{ marginBottom: 2 }}>
         <TextField
-          {...register('emailOrUsername')}
+          {...form.register('emailOrUsername', {
+            required: 'Email ou Usuário é obrigatório'
+          })}
           label="Email ou Usuário"
           type="text"
           fullWidth
           margin="normal"
-          required
+          helperText={form.formState.errors.emailOrUsername?.message}
+          error={!!form.formState.errors.emailOrUsername}
         />
         <TextField
-          {...register('password')}
+          {...form.register('password', {
+            required: 'Senha é obrigatória'
+          })}
           label="Senha"
           type="password"
           fullWidth
           margin="normal"
-          required
+          helperText={form.formState.errors.password?.message}
+          error={!!form.formState.errors.password}
         />
       </Box>
       <Button
