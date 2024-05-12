@@ -2,7 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { UserInfo } from "../../../common/UserInfo";
 import { GetMessagesByChatRoomResponse } from "../../../requests/message/getMessagesByChatRoom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type ChatMessagesProps = {
   groupMessagesByDate: Record<string, GetMessagesByChatRoomResponse>;
@@ -28,11 +28,11 @@ export const ChatMessages = ({
       });
     }
   }
-  
+
   useEffect(() => {
     scrollBottom(scrollMode);
   }, []);
-  
+
   useEffect(() => {
     scrollBottom(scrollMode);
   }, [groupMessagesByDate]);

@@ -3,12 +3,14 @@ import { Box, Tooltip, IconButton } from "@mui/material"
 import { useAuthService } from "../../../hooks/services/authenticate/useAuthService";
 import { useGetChatRoomsUser } from "../../../hooks/services/chat-room/useGetChatRoomsUser";
 import { useState } from "react";
-import { CreateChatModal } from "./CreateChatModal";
+import { CreateChatRoomModal } from "./CreateChatRoomModal";
+import { SearchChatRoomModal } from "./SearchChatRoomModal";
 
 export const SidebarActions = () => {
   const { logout } = useAuthService();
   const { refetch, isLoading } = useGetChatRoomsUser();
   const [isOpenAddChatModal, setIsOpenAddChatModal] = useState(false);
+  const [isOpenSearchChatModal, setIsOpenSearchChatModal] = useState(false);
 
   return (
     <>
@@ -25,7 +27,7 @@ export const SidebarActions = () => {
           </IconButton>
         </Tooltip>
         <Tooltip title="Pesquisar Sala" arrow>
-          <IconButton color="primary">
+          <IconButton color="primary" size="small" onClick={() => setIsOpenSearchChatModal(true)}>
             <Search />
           </IconButton>
         </Tooltip>
@@ -36,7 +38,6 @@ export const SidebarActions = () => {
               onClick={() => refetch()}
               disabled={isLoading}
             >
-
               <Update />
             </IconButton>
           </span>
@@ -47,9 +48,14 @@ export const SidebarActions = () => {
           </IconButton>
         </Tooltip>
       </Box>
-      <CreateChatModal
+      <CreateChatRoomModal
         isOpen={isOpenAddChatModal}
         onClose={() => setIsOpenAddChatModal(false)}
+        refetch={refetch}
+      />
+      <SearchChatRoomModal
+        isOpen={isOpenSearchChatModal}
+        onClose={() => setIsOpenSearchChatModal(false)}
         refetch={refetch}
       />
     </>

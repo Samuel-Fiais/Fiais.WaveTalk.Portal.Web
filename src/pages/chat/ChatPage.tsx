@@ -116,10 +116,6 @@ export const ChatPage = () => {
           createdAt: string;
         }) => {
           setScrollMode("smooth");
-          message.username =
-            chatRooms
-              ?.find((chatRoom) => chatRoom.id === chatRoomId)
-              ?.users.find((user) => user.id === message.userId)?.name || "";
           setMessages((prevMessages) => [...prevMessages, message]);
         }
       );

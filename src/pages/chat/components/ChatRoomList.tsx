@@ -87,7 +87,7 @@ export const ChatRoomList = ({
                 borderRadius: 4,
                 backgroundColor:
                   chatRoom.id === chatRoomId ? "primary.main" : grey[100],
-                color: chatRoom.id === chatRoomId ? "#fff" : grey[800],
+                color: chatRoom.id === chatRoomId ? "#fff" : grey[600],
                 marginBottom: 1,
                 cursor: "pointer",
                 "&:hover": {
@@ -103,7 +103,7 @@ export const ChatRoomList = ({
             >
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body1">{chatRoom.description}</Typography>
-                {chatRoom.isPrivate && <Lock />}
+                {chatRoom.isPrivate && <Lock sx={{ height: 20 }} />}
               </Box>
               <Typography variant="caption">{chatRoom.alternateId}</Typography>
             </Box>

@@ -13,7 +13,7 @@ import { useCreateChatRoom } from "../../../hooks/services/message/useCreateChat
 import { useForm } from "react-hook-form";
 import { useAppSelector } from "../../../redux/store";
 
-type CreateChartModalProps = {
+type CreateChatRoomModalProps = {
   isOpen: boolean;
   onClose: () => void;
   refetch: () => void;
@@ -24,11 +24,11 @@ type CreateChatRoomFields = {
   password: string;
 };
 
-export const CreateChatModal = ({
+export const CreateChatRoomModal = ({
   isOpen,
   onClose,
   refetch,
-}: CreateChartModalProps) => {
+}: CreateChatRoomModalProps) => {
   const { execute, finish, loading } = useCreateChatRoom();
   const conn = useAppSelector((state) => state.connectionReducer.connection);
 
@@ -48,6 +48,7 @@ export const CreateChatModal = ({
       refetch();
       onClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finish]);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export const CreateChatModal = ({
       form.setValue("description", "");
       form.setValue("password", "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   return (

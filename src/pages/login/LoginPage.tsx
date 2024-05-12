@@ -13,7 +13,7 @@ export const LoginPage = () => {
       alignItems: 'center',
       height: '100vh'
     }}>
-      <Card variant="outlined" sx={{ padding: 2, width: '30vw', textAlign: 'center' }}>
+      <Card variant="outlined" sx={{ padding: 2, width: { xs: "100%", sm: "50%" } }}>
         <Typography variant="h4" sx={{ marginBottom: 2 }}>
           {isCreateAccount ? "Criar conta" : "Login"}
         </Typography>

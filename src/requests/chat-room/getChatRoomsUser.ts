@@ -14,7 +14,7 @@ const getChatRoomsUserResponse = z.array(
     users: z.array(
       z.object({
         id: z.string(),
-        alternateId: z.string(),
+        alternateId: z.number(),
         name: z.string(),
         email: z.string(),
         username: z.string(),
