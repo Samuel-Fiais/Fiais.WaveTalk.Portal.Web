@@ -1,6 +1,19 @@
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { useForm } from "react-hook-form";
-import { GetChatRoomByCodeResponse, getChatRoomByCode } from "../../../requests/chat-room/getChatRoomByCode";
+import {
+  GetChatRoomByCodeResponse,
+  getChatRoomByCode,
+} from "../../../requests/chat-room/getChatRoomByCode";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import { useEnterChatRoom } from "../../../hooks/services/user/useEnterChatRoom";
@@ -25,7 +38,9 @@ export const SearchChatRoomModal = ({
   const form = useForm<SearchChatRoomFields>();
   const conn = useAppSelector((state) => state.connectionReducer.connection);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatRoom, setChatRoom] = useState(null as GetChatRoomByCodeResponse | null);
+  const [chatRoom, setChatRoom] = useState(
+    null as GetChatRoomByCodeResponse | null
+  );
   const { execute, finish, loading } = useEnterChatRoom();
 
   const handleSearch = async () => {
@@ -39,14 +54,14 @@ export const SearchChatRoomModal = ({
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const onSubmit = () => {
     execute({
       chatRoomId: chatRoom?.id ?? "",
       password: form.getValues("password"),
     });
-  }
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,7 +83,7 @@ export const SearchChatRoomModal = ({
 
   return (
     <Dialog open={isOpen} onClose={onClose} fullWidth>
-      <DialogTitle>Adicionar Sala</DialogTitle>
+      <DialogTitle>Pesquisar Sala</DialogTitle>
       <DialogContent>
         <Stack display="flex">
           <Stack width="100%">
@@ -116,24 +131,35 @@ export const SearchChatRoomModal = ({
           )}
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ paddingX: 3, paddingBottom: 3 }}>
-        <Button onClick={onClose} color="error">
-          Cancelar
-        </Button>
-        <Button
-          onClick={() => form.handleSubmit(handleSearch)()}
-          color="primary"
-          variant="contained"
-          disabled={isLoading}
+      <DialogActions
+        sx={{
+          paddingX: 3,
+          paddingBottom: 3,
+        }}
+      >
+        <Box
+          display="flex"
+          flexDirection={{ xs: "column", sm: "row" }}
+          justifyContent="end"
+          width="100%"
+          gap={1}
         >
-          {isLoading ? (
-            <CircularProgress size={27} sx={{ color: "white" }} />
-          ) : (
-            "Pesquisar"
-          )}
-        </Button>
-        {
-          chatRoom && (
+          <Button onClick={onClose} color="error">
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => form.handleSubmit(handleSearch)()}
+            color="primary"
+            variant="contained"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <CircularProgress size={27} sx={{ color: "white" }} />
+            ) : (
+              "Pesquisar"
+            )}
+          </Button>
+          {chatRoom && (
             <Button
               onClick={form.handleSubmit(onSubmit)}
               color="success"
@@ -142,9 +168,9 @@ export const SearchChatRoomModal = ({
             >
               Entrar na Sala
             </Button>
-          )
-        }
+          )}
+        </Box>
       </DialogActions>
     </Dialog>
   );
-}
+};
