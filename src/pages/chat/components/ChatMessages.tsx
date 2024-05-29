@@ -27,7 +27,7 @@ export const ChatMessages = ({
         behavior: mode,
       });
     }
-  }
+  };
 
   useEffect(() => {
     scrollBottom(scrollMode);
@@ -42,10 +42,7 @@ export const ChatMessages = ({
       ref={scrollRef}
       sx={{ width: "100%", height: "92%", overflowY: "auto" }}
     >
-      <Box
-        paddingY={2}
-        paddingX={{ xs: 2, lg: 4 }}
-      >
+      <Box paddingY={2} paddingX={{ xs: 2, lg: 4 }}>
         {Object.entries(groupMessagesByDate).map(([date, messagesByDate]) => (
           <div key={date}>
             <Box
@@ -75,7 +72,7 @@ export const ChatMessages = ({
                   flexDirection: "column",
                   alignItems:
                     message.userId === userInfo?.id ? "flex-end" : "flex-start",
-                  marginBottom: 1,
+                  marginBottom: 3,
                   height: "fit-content",
                 }}
               >
