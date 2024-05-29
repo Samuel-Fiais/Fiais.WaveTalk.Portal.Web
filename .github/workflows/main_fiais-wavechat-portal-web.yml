@@ -24,15 +24,6 @@ jobs:
           npm run build:prod --if-present
           npm run test --if-present
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./dist/* -r
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: node-app
-          path: release.zip
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -48,9 +39,6 @@ jobs:
         with:
           name: node-app
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
-
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -64,4 +52,5 @@ jobs:
         with:
           app-name: "Fiais-WaveChat-Portal-Web"
           slot-name: "Production"
+          # Change the path to point to the dist directory
           package: ./dist
