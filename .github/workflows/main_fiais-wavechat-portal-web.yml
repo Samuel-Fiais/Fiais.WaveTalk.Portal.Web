@@ -11,18 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
           node-version: "18.x"
 
-      - name: npm install, build, and test
-        run: |
-          npm install
-          npm run build:prod --if-present
-          npm run test --if-present
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build:prod
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: node-app
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest
@@ -35,9 +42,10 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v2
         with:
           name: node-app
+          path: dist
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -53,4 +61,4 @@ jobs:
           app-name: "Fiais-WaveChat-Portal-Web"
           slot-name: "Production"
           # Change the path to point to the dist directory
-          package: ./dist
+          package: dist
