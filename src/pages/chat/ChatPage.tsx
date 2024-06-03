@@ -23,9 +23,11 @@ import { Menu, Send } from "@mui/icons-material";
 import { chatApi } from "../../config/api";
 import { useDispatch } from "react-redux";
 import { setConnection } from "../../redux/connection/slice";
+import { useSnackbar } from "notistack";
 
 export const ChatPage = () => {
   const { data: chatRooms, isLoading } = useGetChatRoomsUser();
+  const { enqueueSnackbar } = useSnackbar();
   const [chatRoomId, setChatRoomId] = useState("");
   const [messages, setMessages] = useState([] as GetMessagesByChatRoomResponse);
   const [groupedMessages, setGroupedMessages] = useState<
@@ -45,8 +47,8 @@ export const ChatPage = () => {
   const handleSendMessage = () => {
     const send = async () => {
       if (conn?.state == HubConnectionState.Disconnected) await conn?.start();
-      await conn?.invoke("SendMessage", newMessage, chatRoomId);
       setNewMessage("");
+      await conn?.invoke("SendMessage", newMessage, chatRoomId);
     };
 
     send();
@@ -56,7 +58,9 @@ export const ChatPage = () => {
     messagesParam?: GetMessagesByChatRoomResponse | null
   ) => {
     const groupedMessages: Record<string, GetMessagesByChatRoomResponse> = {};
+
     (messagesParam ?? messages).forEach((message) => {
+      if (message.chatRoomId !== chatRoomId) return;
       const dateKey = new Date(message.createdAt).toLocaleDateString("pt-BR");
       if (!groupedMessages[dateKey]) {
         groupedMessages[dateKey] = [];
@@ -84,6 +88,7 @@ export const ChatPage = () => {
     };
 
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatRoomId]);
 
   useEffect(() => {
@@ -110,6 +115,8 @@ export const ChatPage = () => {
         "ReceiveMessage",
         (message: {
           id: string;
+          alternateId: number;
+          chatRoomId: string;
           userId: string;
           username: string;
           content: string;
@@ -119,20 +126,67 @@ export const ChatPage = () => {
           setMessages((prevMessages) => [...prevMessages, message]);
         }
       );
+
+      connUse?.on(
+        "ReceiveNotification",
+        (notification: {
+          chatRoomId: string;
+          userId: string;
+          message: string;
+        }) => {
+          const userInfo = getInfoToken();
+          const chatRoomId = localStorage.getItem("chatRoomId");
+
+          if (
+            notification.userId !== userInfo?.id &&
+            chatRoomId !== notification.chatRoomId
+          )
+            enqueueSnackbar({
+              message: (
+                <Box sx={{ display: "flex", flexDirection: "row" }} gap={5}>
+                  <Typography variant="body1">
+                    {notification.message}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => {
+                      setChatRoomId(notification.chatRoomId);
+                      localStorage.setItem(
+                        "chatRoomId",
+                        notification.chatRoomId
+                      );
+                    }}
+                  >
+                    Ir
+                  </Button>
+                </Box>
+              ),
+              variant: "default",
+              anchorOrigin: {
+                vertical: "top",
+                horizontal: "right",
+              },
+            });
+        }
+      );
     };
 
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (isLoading) {
       setChatRoomId("");
+      localStorage.setItem("chatRoomId", "");
       setMessages([]);
     }
   }, [isLoading]);
 
   useEffect(() => {
     setGroupedMessages(groupMessagesByDate());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
   useEffect(() => {

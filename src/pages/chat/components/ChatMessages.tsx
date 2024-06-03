@@ -31,10 +31,12 @@ export const ChatMessages = ({
 
   useEffect(() => {
     scrollBottom(scrollMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     scrollBottom(scrollMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupMessagesByDate]);
 
   return (

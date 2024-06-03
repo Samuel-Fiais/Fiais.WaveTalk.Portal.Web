@@ -36,6 +36,7 @@ export const ChatRoomList = ({
     } else {
       setChatRoomView(chatRooms);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export const ChatRoomList = ({
               onClick={() => {
                 setChatRoomId(chatRoom.id);
                 setIsOpen(false);
+                localStorage.setItem("chatRoomId", chatRoom.id);
               }}
               sx={{
                 padding: 2,

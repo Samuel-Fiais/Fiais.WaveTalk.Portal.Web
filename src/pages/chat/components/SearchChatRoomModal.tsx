@@ -69,6 +69,7 @@ export const SearchChatRoomModal = ({
       form.setValue("password", "");
       setChatRoom(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   useEffect(() => {
